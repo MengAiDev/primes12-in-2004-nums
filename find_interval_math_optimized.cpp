@@ -16,18 +16,19 @@ class OptimizedPrimeFinder {
 private:
     static constexpr int LENGTH = 2004;
     static constexpr int TARGET = 12;
-    static constexpr long long SEARCH_RADIUS = 1000000; // ±1M around sparse centers
+    static constexpr unsigned long long SEARCH_RADIUS = 1000000ULL; // ±1M around center
+    static constexpr unsigned long long MAX_LIMIT = 100000000000000ULL; // 10^14
 
-    vector<int> small_primes_all;     // up to 10^7
-    vector<int> small_primes_100;     // first 100 primes (for fast pre-sieve)
+    vector<int> small_primes_all;     // primes up to 10^7
+    vector<int> small_primes_100;     // first 100 primes for fast pre-sieve
     mutex io_mutex;
     
     atomic<bool> found{false};
-    atomic<long long> solution_start{0};
-    atomic<long long> total_checked{0};
+    atomic<unsigned long long> solution_start{0};
+    atomic<unsigned long long> total_fully_checked{0};
     high_resolution_clock::time_point program_start;
 
-    // 生成小质数
+    // Generate small primes up to 10^7
     void generate_primes() {
         const int LIMIT = 10000000;
         vector<char> is_prime(LIMIT + 1, true);
@@ -41,49 +42,51 @@ private:
                 }
             }
         }
-        // 取前100个用于预筛
         small_primes_100.assign(small_primes_all.begin(), 
                                small_primes_all.begin() + min(100, (int)small_primes_all.size()));
         
         lock_guard<mutex> lock(io_mutex);
-        cout << "✓ Primes: " << small_primes_all.size() << " (all), " 
-             << small_primes_100.size() << " (fast)" << endl;
+        cout << "✓ Generated " << small_primes_all.size() << " small primes (up to 10^7)" << endl;
     }
 
-    // 快速预筛：返回是否值得完整检查
-    bool fast_presieve(long long start) {
+    // Fast pre-sieve: skip windows with too many/few survivors
+    bool fast_presieve(unsigned long long start) {
         static thread_local vector<char> marked(LENGTH, false);
         fill(marked.begin(), marked.end(), false);
         int covered = 0;
         
         for (int p : small_primes_100) {
-            if (p > LENGTH) break;
-            long long first = ((start + p - 1) / p) * p;
-            for (long long x = first; x < start + LENGTH; x += p) {
-                int idx = x - start;
+            if (p >= LENGTH) break;
+            // First multiple of p >= start
+            unsigned long long first = ((start + p - 1ULL) / p) * p;
+            for (unsigned long long x = first; x < start + LENGTH; x += p) {
+                int idx = static_cast<int>(x - start);
                 if (idx >= 0 && idx < LENGTH && !marked[idx]) {
                     marked[idx] = true;
-                    if (++covered > LENGTH - 8) return false; // 幸存者 < 8
+                    if (++covered > LENGTH - 8) return false; // survivors < 8 → impossible
                 }
             }
         }
         int survivors = LENGTH - covered;
-        return (survivors >= 10 && survivors <= 30); // 启发式窗口
+        return (survivors >= 10 && survivors <= 30); // plausible range for 12 primes
     }
 
-    // 完整分段筛（同前，略作简化）
-    int count_primes_in_window(long long start) {
-        const long long end = start + LENGTH - 1;
+    // Full segmented sieve for one window
+    int count_primes_in_window(unsigned long long start) {
+        const unsigned long long end = start + LENGTH - 1;
         vector<char> seg(LENGTH, true);
         if (start == 1) seg[0] = false;
 
-        long long sqrt_end = sqrt(end) + 1;
+        unsigned long long sqrt_end = static_cast<unsigned long long>(sqrt(end)) + 1;
         for (int p : small_primes_all) {
-            if (p > sqrt_end) break;
-            long long first = max(static_cast<long long>(p)*p, 
-                                 ((start + p - 1)/p) * static_cast<long long>(p));
-            for (long long x = first; x <= end; x += p) {
-                if (x >= start) seg[x - start] = false;
+            if (static_cast<unsigned long long>(p) > sqrt_end) break;
+            unsigned long long p_sq = static_cast<unsigned long long>(p) * p;
+            unsigned long long first = (start + p - 1ULL) / p * p;
+            if (first < p_sq) first = p_sq;
+            if (first > end) continue;
+            
+            for (unsigned long long x = first; x <= end; x += p) {
+                seg[x - start] = false;
             }
         }
 
@@ -94,16 +97,19 @@ private:
         return count;
     }
 
-    // 在 [center - R, center + R] 搜索
-    void search_around_center(long long center, int id) {
-        long long low = max(center - SEARCH_RADIUS, 1LL);
-        long long high = center + SEARCH_RADIUS;
-        
-        for (long long n = low; n <= high - LENGTH + 1 && !found.load(); ++n) {
-            if (!fast_presieve(n)) continue; // 跳过99.9%
+    // Search in [center - R, center + R], bounded by [1, MAX_LIMIT]
+    void search_around_center(unsigned long long center, int id) {
+        unsigned long long low = (center > SEARCH_RADIUS) ? center - SEARCH_RADIUS : 1ULL;
+        unsigned long long high = min(center + SEARCH_RADIUS, MAX_LIMIT);
+        unsigned long long effective_end = (high >= LENGTH) ? high - LENGTH + 1 : 0;
+
+        if (low > effective_end) return;
+
+        for (unsigned long long n = low; n <= effective_end && !found.load(); ++n) {
+            if (!fast_presieve(n)) continue; // Skip 99.9% of windows
             
             int cnt = count_primes_in_window(n);
-            total_checked.fetch_add(1, memory_order_relaxed);
+            total_fully_checked.fetch_add(1, memory_order_relaxed);
             
             if (cnt == TARGET) {
                 if (!found.exchange(true)) {
@@ -112,87 +118,88 @@ private:
                     auto ms = duration_cast<milliseconds>(end_time - program_start).count();
                     
                     lock_guard<mutex> lock(io_mutex);
-                    cout << "\n✓ SOLUTION FOUND near " << center << " by thread " << id << endl;
-                    cout << "N = " << n << " | Time: " << ms/1000.0 << "s" << endl;
+                    cout << "\n=========================================" << endl;
+                    cout << "✓✓✓ SOLUTION FOUND BY THREAD #" << id << " ✓✓✓" << endl;
+                    cout << "N = " << n << endl;
+                    cout << "Interval: [" << n << ", " << n + LENGTH - 1 << "]" << endl;
+                    cout << "Searched up to " << n/1e9 << "B" << endl;
+                    cout << "Time: " << ms/1000.0 << "s | Fully checked: " << total_fully_checked.load() << endl;
+                    cout << "=========================================" << endl;
                 }
                 return;
             }
         }
     }
 
-    // 计算 primorial(p#)
-    long long compute_primorial(int p_max) {
-        __int128 primorial = 1;
-        for (int p : small_primes_all) {
-            if (p > p_max) break;
-            primorial *= p;
-            if (primorial > (__int128)1e18) break; // 防溢出
-        }
-        return (long long)min(primorial, (__int128)1e18);
-    }
-
 public:
     void find() {
         cout << "=========================================" << endl;
-        cout << "SMART SEARCH USING MATHEMATICAL SPARSITY" << endl;
-        cout << "Strategy: Search near primorials, factorials, and known gaps" << endl;
-        cout << "Fast pre-sieve skips 99.9% of windows" << endl;
+        cout << "SMART SEARCH FOR 2004-LENGTH INTERVAL WITH 12 PRIMES" << endl;
+        cout << "Range: up to " << MAX_LIMIT/1e12 << "T (10^14)" << endl;
+        cout << "Strategy: Search near primorials and heuristic sparse centers" << endl;
+        cout << "Fast pre-sieve skips ~99.9% of windows" << endl;
         cout << "=========================================" << endl << endl;
 
         program_start = high_resolution_clock::now();
         generate_primes();
 
-        // 生成候选中心点
-        set<long long> centers;
-        
-        // 1. Primorials
-        vector<int> primorial_bases = {100, 200, 500, 1000};
-        for (int p : primorial_bases) {
-            long long prim = compute_primorial(p);
-            if (prim > 1e12) centers.insert(prim);
-        }
-        
-        // 2. Factorials (approximate via log)
-        vector<int> factorial_ns = {100, 150, 200};
-        for (int n : factorial_ns) {
-            double log_fact = 0;
-            for (int i = 2; i <= n; ++i) log_fact += log(i);
-            if (log_fact > 30) { // > e^30 ~ 1e13
-                long long fact_approx = (long long)exp(min(log_fact, 40.0)); // cap at e^40
-                centers.insert(fact_approx);
+        set<unsigned long long> centers;
+
+        // 1. Primorials (p# for p = 50, 100, 150) — capped at 1e14
+        vector<int> primorial_bases = {50, 100, 150};
+        for (int p_max : primorial_bases) {
+            __int128 primorial = 1;
+            bool overflow = false;
+            for (int p : small_primes_all) {
+                if (p > p_max) break;
+                if (primorial > (__int128)MAX_LIMIT / p) {
+                    overflow = true;
+                    break;
+                }
+                primorial *= p;
+            }
+            if (!overflow && primorial <= (__int128)MAX_LIMIT) {
+                centers.insert(static_cast<unsigned long long>(primorial));
             }
         }
-        
-        // 3. Known large gaps (example centers)
-        vector<long long> known_gaps = {
-            18361375334787046697LL, // record gap ~1550
-            1000000000000000000LL,
-            10000000000000000000LL
-        };
-        for (auto g : known_gaps) centers.insert(g);
 
+        // 2. Heuristic sparse centers (within 10^14)
+        vector<unsigned long long> heuristic = {
+            1000000000000ULL,      // 1e12
+            5000000000000ULL,      // 5e12
+            10000000000000ULL,     // 1e13
+            50000000000000ULL,     // 5e13
+            100000000000000ULL     // 1e14
+        };
+        for (auto c : heuristic) {
+            if (c <= MAX_LIMIT) centers.insert(c);
+        }
+
+        // Output centers
         cout << "Generated " << centers.size() << " candidate centers:" << endl;
         for (auto c : centers) {
             cout << "  " << c << " (" << c/1e9 << "B)" << endl;
         }
         cout << endl;
 
-        // 多线程搜索
+        // Launch threads
         vector<thread> threads;
         int id = 0;
-        for (long long center : centers) {
+        for (unsigned long long center : centers) {
             threads.emplace_back([this, center, id]() {
                 search_around_center(center, id);
             });
             id++;
         }
 
-        // 等待
+        // Wait for all
         for (auto& t : threads) t.join();
 
         if (!found.load()) {
-            cout << "\n✗ No solution found in sparse regions." << endl;
-            cout << "Total windows fully checked: " << total_checked.load() << endl;
+            lock_guard<mutex> lock(io_mutex);
+            cout << "\n✗ No solution found in sparse regions up to " << MAX_LIMIT/1e12 << "T." << endl;
+            cout << "Total windows fully checked: " << total_fully_checked.load() << endl;
+            cout << "Note: Solution likely requires N >> 10^14 (expectation ~10^72)." << endl;
         }
     }
 };
@@ -206,6 +213,7 @@ int main() {
         finder.find();
     } catch (const exception& e) {
         cerr << "Error: " << e.what() << endl;
+        return 1;
     }
     return 0;
 }
