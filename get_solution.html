@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>连续2004个数中恰好12个质数</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+        }
+        body {
+            background: linear-gradient(145deg, #f0f4fa 0%, #dae5f0 100%);
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+        }
+        .card {
+            max-width: 1300px;
+            width: 100%;
+            background: rgba(255,255,255,0.75);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 48px;
+            box-shadow: 0 25px 50px -10px rgba(0,20,40,0.3), inset 0 1px 2px rgba(255,255,255,0.6);
+            padding: 28px 32px;
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+        h1 {
+            font-size: 2.1rem;
+            font-weight: 600;
+            margin: 0 0 6px 0;
+            background: linear-gradient(135deg, #0b2b44, #2a5f7a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        h1 span {
+            background: #1e3b4f;
+            color: white;
+            font-size: 1rem;
+            padding: 6px 16px;
+            border-radius: 40px;
+            background: linear-gradient(145deg, #2f4b62, #17323f);
+            box-shadow: inset 0 2px 3px rgba(255,255,255,0.3), 0 4px 8px rgba(0,10,20,0.3);
+            -webkit-text-fill-color: white;
+            font-weight: 400;
+            letter-spacing: 0.3px;
+        }
+        .subtitle {
+            color: #1f4662;
+            margin-top: 0;
+            margin-bottom: 28px;
+            font-size: 1.1rem;
+            border-left: 4px solid #3f7e9e;
+            padding-left: 18px;
+            background: rgba(60, 110, 140, 0.05);
+            border-radius: 0 20px 20px 0;
+        }
+        .control-panel {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px 20px;
+            align-items: flex-end;
+            margin-bottom: 28px;
+            background: rgba(255,255,255,0.3);
+            padding: 22px 22px 18px 22px;
+            border-radius: 42px;
+            backdrop-filter: blur(4px);
+            box-shadow: 0 6px 14px rgba(35, 55, 80, 0.1);
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            min-width: 260px;
+            flex: 2 1 300px;
+        }
+        .input-group label {
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #0e3a4f;
+            margin-bottom: 5px;
+        }
+        .input-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .input-row input {
+            flex: 1;
+            background: white;
+            border: 2px solid #cbdbe9;
+            border-radius: 60px;
+            padding: 14px 20px;
+            font-size: 1rem;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            outline: none;
+            transition: 0.15s;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.02);
+        }
+        .input-row input:focus {
+            border-color: #2f7ca0;
+            box-shadow: 0 0 0 4px rgba(47,124,160,0.15);
+        }
+        .exp-slider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #e3edf5;
+            padding: 5px 18px;
+            border-radius: 40px;
+            border: 1px solid #b5cfdf;
+        }
+        .exp-slider span {
+            font-weight: 700;
+            color: #134257;
+            font-size: 1.2rem;
+        }
+        button {
+            background: #245e7c;
+            border: none;
+            border-radius: 60px;
+            padding: 14px 28px;
+            font-weight: 600;
+            font-size: 1rem;
+            color: white;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 10px 18px -8px #1f4a63, 0 2px 0 0 #c2e0f0 inset;
+            transition: 0.1s ease;
+            border: 1px solid rgba(255,255,255,0.3);
+            min-width: 130px;
+        }
+        button:hover {
+            background: #2b6f92;
+            transform: translateY(-3px);
+            box-shadow: 0 18px 25px -10px #1f4a63, 0 2px 0 0 #daf2ff inset;
+        }
+        button:active {
+            transform: translateY(2px);
+            box-shadow: 0 5px 12px -6px #0f2f40;
+        }
+        button.outline {
+            background: rgba(255,255,255,0.6);
+            color: #0a3142;
+            box-shadow: 0 0 0 2px #7ba1b9 inset;
+            backdrop-filter: blur(4px);
+        }
+        button.outline:hover {
+            background: white;
+        }
+        .stats {
+            background: #ddeeff;
+            border-radius: 48px;
+            padding: 22px 28px;
+            margin-bottom: 26px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            gap: 28px 48px;
+            border: 1px solid white;
+        }
+        .stat-item {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+        .stat-label {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #1c4b64;
+        }
+        .stat-value {
+            font-size: 2.3rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            background: #0a2a3a;
+            color: white;
+            padding: 6px 24px;
+            border-radius: 80px;
+            letter-spacing: 1px;
+            box-shadow: inset 0 2px 5px #adcfdf, 0 5px 0 #08212e;
+        }
+        .badge {
+            background: #d2e2f0;
+            border-radius: 30px;
+            padding: 8px 22px;
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: #103d54;
+            transition: 0.2s;
+        }
+        .badge.hit {
+            background: #f7d44a;
+            color: #1d3b4f;
+            font-weight: 700;
+            box-shadow: 0 0 0 3px #ffec9e;
+        }
+        .full-number-area {
+            margin-top: 12px;
+            background: #eaf3fc;
+            border-radius: 30px;
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            border: 1px solid #b2cfec;
+            font-family: 'JetBrains Mono', monospace;
+            word-break: break-all;
+        }
+        .full-number-label {
+            font-weight: 600;
+            color: #0d405a;
+            white-space: nowrap;
+        }
+        .full-number-value {
+            font-size: 0.95rem;
+            background: white;
+            padding: 8px 18px;
+            border-radius: 60px;
+            border: 1px solid #aac3db;
+            flex: 1;
+            overflow-x: auto;
+            white-space: nowrap;
+            scrollbar-width: thin;
+        }
+        .copy-btn {
+            background: #2b5e7c;
+            border-radius: 40px;
+            padding: 8px 20px;
+            color: white;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border: none;
+            white-space: nowrap;
+            box-shadow: 0 4px 6px #0d3142;
+        }
+        .copy-btn:hover {
+            background: #3f7a9c;
+        }
+        .visual-container {
+            background: #192f3c;
+            border-radius: 36px;
+            padding: 30px 20px 20px 20px;
+            box-shadow: inset 0 0 0 1px #698fa8, 0 20px 30px -10px black;
+        }
+        .canvas-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            border-radius: 22px;
+            background: #0f1f28;
+            padding: 8px 0;
+            box-shadow: inset 0 2px 10px #030a0f;
+        }
+        canvas {
+            display: block;
+            height: 50px;
+            width: 2004px;
+            image-rendering: crisp-edges;
+            background: #1b3341;
+            border-radius: 8px;
+        }
+        .legend {
+            display: flex;
+            gap: 30px;
+            justify-content: flex-end;
+            margin-top: 18px;
+            color: #c1d9e8;
+            font-size: 0.95rem;
+        }
+        .legend span::before {
+            content: "⬤";
+            margin-right: 8px;
+            font-size: 1.4rem;
+            vertical-align: middle;
+            display: inline-block;
+        }
+        .prime-legend::before { color: #ffaa5e; }
+        .composite-legend::before { color: #507e9c; }
+        footer {
+            text-align: center;
+            margin-top: 24px;
+            color: #2f5875;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>
+        2004 连号
+        <span>恰好 12 个质数</span>
+    </h1>
+    <div class="subtitle">
+        在巨大的自然数领域 (≈10⁷²) ，连续2004个数中平均只出现12个质数。通过随机采样找出这样稀有的区间。
+    </div>
+
+    <div class="control-panel">
+        <div class="input-group">
+            <label> 起始数 (超大整数)</label>
+            <div class="input-row">
+                <input type="text" id="startInput" value="724648980675214569874321656789012345678901234567890123456789012345678901" placeholder="例如 10^72 左右的整数">
+                <button class="outline" id="applyStartBtn">↵ 计算</button>
+            </div>
+        </div>
+        <div class="exp-slider">
+            <span>10^</span>
+            <input type="range" id="expRange" min="65" max="80" value="72" step="0.5" style="width:200px">
+            <span id="expDisplay">72.0</span>
+        </div>
+        <button id="randomStartBtn"> 随机起点</button>
+        <button id="find12Btn"> 寻找12个质数 (随机尝试)</button>
+    </div>
+
+    <div class="stats">
+        <div class="stat-item">
+            <span class="stat-label">当前区间质数个数</span>
+            <span class="stat-value" id="primeCount">---</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">与目标差值</span>
+            <span class="badge" id="diffTarget">---</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">科学记数法</span>
+            <span class="badge" id="startSci">---</span>
+        </div>
+    </div>
+
+    <div class="full-number-area" id="fullNumberArea" style="display: none;">
+        <span class="full-number-label">精确起始数：</span>
+        <span class="full-number-value" id="exactStart"></span>
+        <button class="copy-btn" id="copyExactBtn">复制</button>
+    </div>
+
+    <div class="visual-container">
+        <div class="canvas-wrapper">
+            <canvas id="primeCanvas" width="2004" height="50"></canvas>
+        </div>
+        <div class="legend">
+            <span class="prime-legend">质数 (橙)</span>
+            <span class="composite-legend">合数 (蓝灰)</span>
+            <span>← 2004 个连续整数 → 每个竖条代表一个数</span>
+        </div>
+    </div>
+    <!-- <footer>
+        使用 Miller–Rabin 素性测试 + 小质数试除。命中时会弹出完整起始数，并显示在下方面板。
+    </footer> -->
+</div>
+
+<script>
+    (function() {
+        // ---------- 工具函数：大数运算 + 质数测试 ----------
+        // 生成前200个小质数用于快速试除
+        function generateSmallPrimes(limit = 200) {
+            let primes = [];
+            let isPrime = new Array(1500).fill(true);
+            for (let i = 2; i < 1500; i++) {
+                if (isPrime[i]) {
+                    primes.push(i);
+                    for (let j = i * i; j < 1500; j += i) isPrime[j] = false;
+                }
+            }
+            return primes.slice(0, limit);
+        }
+        const smallPrimes = generateSmallPrimes(200).map(BigInt);
+
+        // 快速模幂 (base^exp % mod)
+        function modPow(base, exp, mod) {
+            if (mod === 1n) return 0n;
+            let result = 1n;
+            let b = base % mod;
+            let e = exp;
+            while (e > 0) {
+                if (e & 1n) result = (result * b) % mod;
+                b = (b * b) % mod;
+                e >>= 1n;
+            }
+            return result;
+        }
+
+        // Miller-Rabin 确定性基组 (针对 < 2^64 其实足够，这里用于超大数的概率测试，增加基组降低错误)
+        const mrBases = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37].map(BigInt);
+
+        function isProbablePrime(n) {
+            if (n < 2n) return false;
+            if (n % 2n === 0n) return n === 2n;
+            // 先试除小质数
+            for (let p of smallPrimes) {
+                if (p >= n) break;
+                if (n % p === 0n) return n === p;
+            }
+            // 写 n-1 = 2^s * d
+            let d = n - 1n;
+            let s = 0;
+            while (d % 2n === 0n) {
+                d /= 2n;
+                s++;
+            }
+            // 对每个基测试
+            testBase: for (let a of mrBases) {
+                if (a >= n) continue;
+                let x = modPow(a, d, n);
+                if (x === 1n || x === n - 1n) continue;
+                for (let r = 1; r < s; r++) {
+                    x = (x * x) % n;
+                    if (x === n - 1n) continue testBase;
+                }
+                return false; // 合数
+            }
+            return true; // 可能是素数
+        }
+
+        // 计算区间 [start, start+2003] 内质数个数，并返回每个数的质数标记数组
+        function scanRange(start) {
+            let count = 0;
+            const marks = new Array(2004).fill(false);
+            for (let i = 0; i < 2004; i++) {
+                let num = start + BigInt(i);
+                let isPrime = isProbablePrime(num);
+                marks[i] = isPrime;
+                if (isPrime) count++;
+            }
+            return { count, marks };
+        }
+
+        // 随机生成指定位数的大整数 (十进制)
+        function randomBigIntByExponent(exp) {
+            let digits = Math.floor(exp);
+            if (digits < 1) digits = 1;
+            let first = Math.floor(Math.random() * 9) + 1;
+            let str = first.toString();
+            for (let i = 1; i < digits; i++) {
+                str += Math.floor(Math.random() * 10).toString();
+            }
+            return BigInt(str);
+        }
+
+        // 将 BigInt 转换为科学记数法字符串 (保留3位有效数字)
+        function bigIntToSci(n) {
+            let s = n.toString();
+            if (s.length <= 1) return s;
+            let first = s[0];
+            if (s.length > 1) first += '.' + s.slice(1, 4);
+            return first + 'e' + (s.length - 1);
+        }
+
+        // 渲染 canvas
+        function renderMarks(marks) {
+            const canvas = document.getElementById('primeCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < marks.length; i++) {
+                ctx.fillStyle = marks[i] ? '#ffaa5e' : '#507e9c';
+                ctx.fillRect(i, 0, 1, 50);
+            }
+        }
+
+        // 显示完整起始数区域并填充数字
+        function showExactStart(number) {
+            const area = document.getElementById('fullNumberArea');
+            const exactSpan = document.getElementById('exactStart');
+            exactSpan.innerText = number.toString();
+            area.style.display = 'flex';  // 显示区域
+        }
+
+        // 复制功能
+        document.getElementById('copyExactBtn').addEventListener('click', () => {
+            const text = document.getElementById('exactStart').innerText;
+            if (text) {
+                navigator.clipboard.writeText(text).then(() => {
+                    alert('✅ 起始数已复制到剪贴板');
+                }).catch(() => {
+                    alert('❌ 复制失败，请手动选择复制');
+                });
+            }
+        });
+
+        // ---------- 页面元素绑定 ----------
+        const startInput = document.getElementById('startInput');
+        const applyStartBtn = document.getElementById('applyStartBtn');
+        const randomStartBtn = document.getElementById('randomStartBtn');
+        const find12Btn = document.getElementById('find12Btn');
+        const expRange = document.getElementById('expRange');
+        const expDisplay = document.getElementById('expDisplay');
+        const primeCountSpan = document.getElementById('primeCount');
+        const diffTargetSpan = document.getElementById('diffTarget');
+        const startSciSpan = document.getElementById('startSci');
+
+        let currentStart = 724648980675214569874321656789012345678901234567890123456789012345678901n;
+        let currentMarks = new Array(2004).fill(false);
+        let currentCount = 0;
+
+        function updateDisplayFromStart(start) {
+            startInput.value = start.toString();
+            const { count, marks } = scanRange(start);
+            currentMarks = marks;
+            currentCount = count;
+            primeCountSpan.innerText = count;
+            const diff = count - 12;
+            diffTargetSpan.innerText = (diff > 0 ? '+' : '') + diff + (diff === 0 ? '  ✨ 命中！' : '');
+            if (diff === 0) {
+                diffTargetSpan.classList.add('hit');
+                // 命中时自动展开完整数字区域
+                showExactStart(start);
+            } else {
+                diffTargetSpan.classList.remove('hit');
+            }
+            startSciSpan.innerText = bigIntToSci(start);
+            renderMarks(marks);
+        }
+
+        function getStartFromInput() {
+            try {
+                let raw = startInput.value.trim();
+                if (raw === '') throw new Error('空输入');
+                return BigInt(raw);
+            } catch (e) {
+                alert('输入无效，使用上一个有效起始数');
+                return currentStart;
+            }
+        }
+
+        applyStartBtn.addEventListener('click', () => {
+            let start = getStartFromInput();
+            currentStart = start;
+            updateDisplayFromStart(start);
+        });
+
+        randomStartBtn.addEventListener('click', () => {
+            let exp = parseFloat(expRange.value);
+            let start = randomBigIntByExponent(exp);
+            currentStart = start;
+            updateDisplayFromStart(start);
+        });
+
+        // 寻找12个质数
+        let searching = false;
+        find12Btn.addEventListener('click', async () => {
+            if (searching) {
+                searching = false;
+                find12Btn.innerText = '✨ 寻找12个质数 (随机尝试)';
+                return;
+            }
+            searching = true;
+            find12Btn.innerText = '⏹️ 停止寻找';
+            let exp = parseFloat(expRange.value);
+            let attempts = 0;
+            while (searching) {
+                attempts++;
+                let candidate = randomBigIntByExponent(exp);
+                await new Promise(res => setTimeout(res, 0)); // 让出事件循环
+                const { count, marks } = scanRange(candidate);
+                if (count === 12) {
+                    // 找到！更新界面
+                    currentStart = candidate;
+                    currentMarks = marks;
+                    currentCount = count;
+                    primeCountSpan.innerText = count;
+                    diffTargetSpan.innerText = '0  ✨ 命中！';
+                    diffTargetSpan.classList.add('hit');
+                    startSciSpan.innerText = bigIntToSci(candidate);
+                    renderMarks(marks);
+                    startInput.value = candidate.toString();
+                    // 显示完整数字区域
+                    showExactStart(candidate);
+                    // 弹出精确消息框（含完整数字）
+                    alert(`🎉 找到了！尝试 ${attempts} 次后命中。\n\n起始数（完整精确）:\n${candidate.toString()}`);
+                    searching = false;
+                    find12Btn.innerText = '✨ 寻找12个质数 (随机尝试)';
+                    break;
+                }
+                if (attempts % 5 === 0) {
+                    find12Btn.innerText = `⏳ 尝试 ${attempts} 次...`;
+                }
+            }
+            if (!searching) {
+                find12Btn.innerText = '✨ 寻找12个质数 (随机尝试)';
+            }
+        });
+
+        // 滑块显示
+        function updateExpDisplay() {
+            let val = parseFloat(expRange.value).toFixed(1);
+            expDisplay.innerText = val;
+        }
+        expRange.addEventListener('input', updateExpDisplay);
+        updateExpDisplay();
+
+        // 初次加载
+        window.addEventListener('load', () => {
+            updateDisplayFromStart(currentStart);
+        });
+
+        // 键盘微调
+        startInput.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                e.preventDefault();
+                let step = e.shiftKey ? 100n : 1n;
+                try {
+                    let current = BigInt(startInput.value) || currentStart;
+                    if (e.key === 'ArrowUp') current += step;
+                    else current -= step;
+                    startInput.value = current.toString();
+                } catch (er) { /* ignore */ }
+            }
+        });
+        startInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                applyStartBtn.click();
+            }
+        });
+
+    })();
+</script>
+</body>
+</html>
