@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>质数搜索 · 小于上限的12质数区间</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+        }
+        body {
+            background: linear-gradient(145deg, #eef2f6 0%, #d3e0ec 100%);
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+        }
+        .card {
+            max-width: 1300px;
+            width: 100%;
+            background: rgba(255,255,255,0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 48px;
+            box-shadow: 0 25px 50px -10px rgba(0,20,40,0.3);
+            padding: 28px 32px;
+            border: 1px solid rgba(255,255,255,0.6);
+        }
+        h1 {
+            font-size: 2.1rem;
+            font-weight: 600;
+            margin: 0 0 8px 0;
+            background: linear-gradient(135deg, #0b2b44, #2a5f7a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        h1 span {
+            background: #1e3b4f;
+            color: white;
+            font-size: 1rem;
+            padding: 6px 16px;
+            border-radius: 40px;
+            background: linear-gradient(145deg, #2f4b62, #17323f);
+            box-shadow: inset 0 2px 3px rgba(255,255,255,0.3);
+            -webkit-text-fill-color: white;
+        }
+        .subtitle {
+            color: #1f4662;
+            margin: 0 0 28px 0;
+            font-size: 1.1rem;
+            border-left: 4px solid #3f7e9e;
+            padding-left: 18px;
+            background: rgba(60, 110, 140, 0.05);
+            border-radius: 0 20px 20px 0;
+        }
+        .control-panel {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: flex-end;
+            margin-bottom: 28px;
+            background: rgba(255,255,255,0.4);
+            padding: 24px 28px;
+            border-radius: 42px;
+            backdrop-filter: blur(4px);
+            box-shadow: 0 6px 14px rgba(35,55,80,0.1);
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            flex: 3 1 400px;
+        }
+        .input-group label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #0e3a4f;
+            margin-bottom: 6px;
+        }
+        .input-row {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        .input-row input {
+            flex: 1;
+            background: white;
+            border: 2px solid #b9d1e3;
+            border-radius: 60px;
+            padding: 16px 22px;
+            font-size: 1rem;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            outline: none;
+            transition: 0.15s;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.02);
+        }
+        .input-row input:focus {
+            border-color: #2f7ca0;
+            box-shadow: 0 0 0 4px rgba(47,124,160,0.15);
+        }
+        button {
+            background: #245e7c;
+            border: none;
+            border-radius: 60px;
+            padding: 16px 32px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: white;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 10px 18px -8px #1f4a63, 0 2px 0 0 #c2e0f0 inset;
+            transition: 0.1s ease;
+            border: 1px solid rgba(255,255,255,0.3);
+            white-space: nowrap;
+        }
+        button:hover {
+            background: #2b6f92;
+            transform: translateY(-3px);
+            box-shadow: 0 18px 25px -10px #1f4a63, 0 2px 0 0 #daf2ff inset;
+        }
+        button:active {
+            transform: translateY(2px);
+            box-shadow: 0 5px 12px -6px #0f2f40;
+        }
+        button.stop {
+            background: #a13d3d;
+            box-shadow: 0 10px 18px -8px #6b2b2b;
+        }
+        .stats {
+            background: #ddeeff;
+            border-radius: 48px;
+            padding: 22px 28px;
+            margin-bottom: 26px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            gap: 28px 48px;
+            border: 1px solid white;
+        }
+        .stat-item {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+        .stat-label {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #1c4b64;
+        }
+        .stat-value {
+            font-size: 2.3rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            background: #0a2a3a;
+            color: white;
+            padding: 6px 24px;
+            border-radius: 80px;
+            letter-spacing: 1px;
+            box-shadow: inset 0 2px 5px #adcfdf, 0 5px 0 #08212e;
+        }
+        .badge {
+            background: #d2e2f0;
+            border-radius: 30px;
+            padding: 8px 22px;
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: #103d54;
+            transition: 0.2s;
+        }
+        .badge.hit {
+            background: #f7d44a;
+            color: #1d3b4f;
+            font-weight: 700;
+            box-shadow: 0 0 0 3px #ffec9e;
+        }
+        .full-number-area {
+            margin-top: 16px;
+            background: #eaf3fc;
+            border-radius: 30px;
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            border: 1px solid #b2cfec;
+            font-family: 'JetBrains Mono', monospace;
+            word-break: break-all;
+        }
+        .full-number-label {
+            font-weight: 600;
+            color: #0d405a;
+            white-space: nowrap;
+        }
+        .full-number-value {
+            font-size: 0.95rem;
+            background: white;
+            padding: 8px 18px;
+            border-radius: 60px;
+            border: 1px solid #aac3db;
+            flex: 1;
+            overflow-x: auto;
+            white-space: nowrap;
+            scrollbar-width: thin;
+        }
+        .copy-btn {
+            background: #2b5e7c;
+            border-radius: 40px;
+            padding: 8px 20px;
+            color: white;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border: none;
+            white-space: nowrap;
+            box-shadow: 0 4px 6px #0d3142;
+        }
+        .copy-btn:hover {
+            background: #3f7a9c;
+        }
+        .visual-container {
+            background: #192f3c;
+            border-radius: 36px;
+            padding: 30px 20px 20px 20px;
+            box-shadow: inset 0 0 0 1px #698fa8, 0 20px 30px -10px black;
+            margin-top: 20px;
+        }
+        .canvas-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            border-radius: 22px;
+            background: #0f1f28;
+            padding: 8px 0;
+            box-shadow: inset 0 2px 10px #030a0f;
+        }
+        canvas {
+            display: block;
+            height: 50px;
+            width: 2004px;
+            image-rendering: crisp-edges;
+            background: #1b3341;
+            border-radius: 8px;
+        }
+        .legend {
+            display: flex;
+            gap: 30px;
+            justify-content: flex-end;
+            margin-top: 18px;
+            color: #c1d9e8;
+            font-size: 0.95rem;
+        }
+        .legend span::before {
+            content: "⬤";
+            margin-right: 8px;
+            font-size: 1.4rem;
+            vertical-align: middle;
+        }
+        .prime-legend::before { color: #ffaa5e; }
+        .composite-legend::before { color: #507e9c; }
+        footer {
+            text-align: center;
+            margin-top: 24px;
+            color: #2f5875;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>
+        🔎 上限内搜索 · 2004连号恰含12质数
+        <span>精确解展示</span>
+    </h1>
+    <div class="subtitle">
+        指定一个自然数上限 (upper bound)，自动随机采样寻找起始数 ≤ upper 的区间，其中恰好有12个质数。
+    </div>
+
+    <!-- 简化界面：只有上限输入和搜索按钮 -->
+    <div class="control-panel">
+        <div class="input-group">
+            <label>🔝 上限 (upper bound) — 起始数必须 ≤ 该值</label>
+            <div class="input-row">
+                <input type="text" id="upperBoundInput" value="1000000000000000000000000000000000000000000000000000000000000000000000000" placeholder="输入一个大整数作为上限">
+                <button id="searchBtn">🚀 开始搜索</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 当前搜索/结果显示区 -->
+    <div class="stats">
+        <div class="stat-item">
+            <span class="stat-label">当前起始数质数个数</span>
+            <span class="stat-value" id="primeCount">---</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">与目标差值</span>
+            <span class="badge" id="diffTarget">---</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">科学记数法</span>
+            <span class="badge" id="startSci">---</span>
+        </div>
+    </div>
+
+    <!-- 完整起始数 + 复制按钮 (默认隐藏, 找到解后显示) -->
+    <div class="full-number-area" id="fullNumberArea" style="display: none;">
+        <span class="full-number-label">📋 精确起始数：</span>
+        <span class="full-number-value" id="exactStart"></span>
+        <button class="copy-btn" id="copyExactBtn">复制</button>
+    </div>
+
+    <div class="visual-container">
+        <div class="canvas-wrapper">
+            <canvas id="primeCanvas" width="2004" height="50"></canvas>
+        </div>
+        <div class="legend">
+            <span class="prime-legend">质数 (橙)</span>
+            <span class="composite-legend">合数 (蓝灰)</span>
+            <span>← 2004 个连续整数 →</span>
+        </div>
+    </div>
+
+    <footer>
+        ⚡ Miller–Rabin 素性测试 + 小质数试除。搜索在 [1, 上限] 内随机采样，找到即止。
+    </footer>
+</div>
+
+<script>
+    (function() {
+        // ---------- 工具函数：大数运算 + 质数测试 ----------
+        // 生成前200个小质数用于快速试除
+        function generateSmallPrimes(limit = 200) {
+            let primes = [];
+            let isPrime = new Array(1500).fill(true);
+            for (let i = 2; i < 1500; i++) {
+                if (isPrime[i]) {
+                    primes.push(i);
+                    for (let j = i * i; j < 1500; j += i) isPrime[j] = false;
+                }
+            }
+            return primes.slice(0, limit);
+        }
+        const smallPrimes = generateSmallPrimes(200).map(BigInt);
+
+        function modPow(base, exp, mod) {
+            if (mod === 1n) return 0n;
+            let result = 1n;
+            let b = base % mod;
+            let e = exp;
+            while (e > 0) {
+                if (e & 1n) result = (result * b) % mod;
+                b = (b * b) % mod;
+                e >>= 1n;
+            }
+            return result;
+        }
+
+        const mrBases = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37].map(BigInt);
+
+        function isProbablePrime(n) {
+            if (n < 2n) return false;
+            if (n % 2n === 0n) return n === 2n;
+            for (let p of smallPrimes) {
+                if (p >= n) break;
+                if (n % p === 0n) return n === p;
+            }
+            let d = n - 1n;
+            let s = 0;
+            while (d % 2n === 0n) {
+                d /= 2n;
+                s++;
+            }
+            testBase: for (let a of mrBases) {
+                if (a >= n) continue;
+                let x = modPow(a, d, n);
+                if (x === 1n || x === n - 1n) continue;
+                for (let r = 1; r < s; r++) {
+                    x = (x * x) % n;
+                    if (x === n - 1n) continue testBase;
+                }
+                return false;
+            }
+            return true;
+        }
+
+        function scanRange(start) {
+            let count = 0;
+            const marks = new Array(2004).fill(false);
+            for (let i = 0; i < 2004; i++) {
+                let num = start + BigInt(i);
+                let isPrime = isProbablePrime(num);
+                marks[i] = isPrime;
+                if (isPrime) count++;
+            }
+            return { count, marks };
+        }
+
+        // 生成随机 BigInt 在 [0, mod-1] 范围内（均匀性依赖于 crypto）
+        function randomBigIntMod(mod) {
+            if (mod <= 0n) return 0n;
+            // 计算需要的字节数 (mod 的位长度 + 8 额外)
+            const hexLen = mod.toString(16).length;
+            const byteLen = Math.ceil(hexLen / 2) + 8; // 多生成一些，降低模偏置影响
+            const buffer = new Uint8Array(byteLen);
+            crypto.getRandomValues(buffer);
+            let rand = 0n;
+            for (let i = 0; i < buffer.length; i++) {
+                rand = (rand << 8n) | BigInt(buffer[i]);
+            }
+            return rand % mod;
+        }
+
+        // 生成 [1, upper] 范围内的随机起始数
+        function randomStartBelow(upper) {
+            // 先生成 [0, upper-1] 再加 1
+            return randomBigIntMod(upper) + 1n;
+        }
+
+        // 科学记数法
+        function bigIntToSci(n) {
+            let s = n.toString();
+            if (s.length <= 1) return s;
+            let first = s[0] + '.' + s.slice(1, 4);
+            return first + 'e' + (s.length - 1);
+        }
+
+        // 渲染 canvas
+        function renderMarks(marks) {
+            const canvas = document.getElementById('primeCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < marks.length; i++) {
+                ctx.fillStyle = marks[i] ? '#ffaa5e' : '#507e9c';
+                ctx.fillRect(i, 0, 1, 50);
+            }
+        }
+
+        // 显示完整起始数
+        function showExactStart(number) {
+            const area = document.getElementById('fullNumberArea');
+            const exactSpan = document.getElementById('exactStart');
+            exactSpan.innerText = number.toString();
+            area.style.display = 'flex';
+        }
+
+        // 复制功能
+        document.getElementById('copyExactBtn').addEventListener('click', () => {
+            const text = document.getElementById('exactStart').innerText;
+            if (text) {
+                navigator.clipboard.writeText(text).then(() => {
+                    alert('✅ 起始数已复制到剪贴板');
+                }).catch(() => {
+                    alert('❌ 复制失败，请手动选择复制');
+                });
+            }
+        });
+
+        // ---------- UI 元素绑定 ----------
+        const upperBoundInput = document.getElementById('upperBoundInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const primeCountSpan = document.getElementById('primeCount');
+        const diffTargetSpan = document.getElementById('diffTarget');
+        const startSciSpan = document.getElementById('startSci');
+
+        let currentStart = 724648980675214569874321656789012345678901234567890123456789012345678901n; // 默认展示
+        let currentMarks = new Array(2004).fill(false);
+        let currentCount = 0;
+
+        // 更新界面 (根据给定的起始数)
+        function updateDisplayFromStart(start) {
+            const { count, marks } = scanRange(start);
+            currentMarks = marks;
+            currentCount = count;
+            primeCountSpan.innerText = count;
+            const diff = count - 12;
+            diffTargetSpan.innerText = (diff > 0 ? '+' : '') + diff + (diff === 0 ? '  ✨ 命中！' : '');
+            if (diff === 0) {
+                diffTargetSpan.classList.add('hit');
+                showExactStart(start);
+            } else {
+                diffTargetSpan.classList.remove('hit');
+                // 非命中时隐藏精确区域（可选）
+                document.getElementById('fullNumberArea').style.display = 'none';
+            }
+            startSciSpan.innerText = bigIntToSci(start);
+            renderMarks(marks);
+        }
+
+        // 搜索状态
+        let searching = false;
+        let maxAttempts = 50000; // 最大尝试次数，防止无限循环
+
+        searchBtn.addEventListener('click', async () => {
+            if (searching) {
+                searching = false;
+                searchBtn.innerText = '🚀 开始搜索';
+                searchBtn.classList.remove('stop');
+                return;
+            }
+
+            // 解析上限
+            let upper;
+            try {
+                let raw = upperBoundInput.value.trim();
+                if (raw === '') throw new Error('空输入');
+                upper = BigInt(raw);
+                if (upper < 1n) throw new Error('上限必须 ≥ 1');
+            } catch (e) {
+                alert('请输入有效的自然数上限 (正整数)');
+                return;
+            }
+
+            searching = true;
+            searchBtn.innerText = '⏹️ 停止搜索';
+            searchBtn.classList.add('stop');
+
+            let attempts = 0;
+            let found = false;
+
+            while (searching && attempts < maxAttempts) {
+                attempts++;
+                // 随机生成起始数 ≤ upper
+                let start = randomStartBelow(upper);
+                const { count, marks } = scanRange(start);
+                if (count === 12) {
+                    // 命中！
+                    currentStart = start;
+                    currentMarks = marks;
+                    currentCount = count;
+                    primeCountSpan.innerText = count;
+                    diffTargetSpan.innerText = '0  ✨ 命中！';
+                    diffTargetSpan.classList.add('hit');
+                    startSciSpan.innerText = bigIntToSci(start);
+                    renderMarks(marks);
+                    showExactStart(start);
+                    // 可选弹窗提醒
+                    alert(`🎉 找到解！尝试次数: ${attempts}\n起始数: ${start.toString()}`);
+                    found = true;
+                    break;
+                }
+                // 每100次更新一下按钮文字
+                if (attempts % 100 === 0) {
+                    searchBtn.innerText = `⏳ 尝试 ${attempts} 次...`;
+                    // 让出事件循环
+                    await new Promise(res => setTimeout(res, 0));
+                }
+            }
+
+            searching = false;
+            searchBtn.innerText = '🚀 开始搜索';
+            searchBtn.classList.remove('stop');
+
+            if (!found) {
+                if (attempts >= maxAttempts) {
+                    alert(`已达到最大尝试次数 ${maxAttempts}，未找到解。您可以提高上限或再次尝试。`);
+                } else {
+                    // 用户手动停止
+                    alert('搜索已停止。');
+                }
+            }
+        });
+
+        // 初始加载时，用默认起始数显示 (可选，也可留空)
+        window.addEventListener('load', () => {
+            updateDisplayFromStart(currentStart);
+        });
+
+        // 允许在输入框按回车触发搜索
+        upperBoundInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                searchBtn.click();
+            }
+        });
+
+    })();
+</script>
+</body>
+</html>
