@@ -1,59 +1,66 @@
-##  **问题定义**
-数论讲义上有这道题：
-寻找最小正整数 \(N\)，使得连续 2004 个整数 \([N, N+2003]\) 中**恰好包含 12 个质数**。
+## **Problem Definition**
+This problem appears in a number theory textbook:  
+Find the smallest positive integer \(N\) such that the interval of 2004 consecutive integers \([N, N+2003]\) contains **exactly 12 primes**.
 
-- 初步分析：期望质数数 = 12 ⇒ \(N \approx e^{167} \approx 10^{72.5}\)
-- 已知：计算机验证至 **105.93B无解**
-
----
-
-##  **理论分析：为何暴力搜索不可行？**
-- 在 \(N \leq 10^{14}\)，期望质数数 ≈ 62，实际最小值 > 40
-- 质数密度下降极慢，**解必然远大于 \(10^{14}\)**
-- 盲目线性扫描需宇宙级算力（> \(10^{30}\) 年）
+- Preliminary analysis: Expected number of primes = 12 ⇒ \(N \approx e^{167} \approx 10^{72.5}\)
+- Known: Computer verification up to **105.93 billion found no solution**
 
 ---
 
-##  **工程优化**
-- 开发 **多线程分段筛程序**（C++）
-- 引入 **快速预筛**：用前 100 个小质数估算“幸存者”数量
-- **结果**：在 \(10^{14}\) 内 **0 个窗口进入完整筛法** → 证实无解
+## **Theoretical Analysis: Why Brute Force Is Infeasible**
+- For \(N \leq 10^{14}\), the expected number of primes ≈ 62, and the actual minimum > 40
+- Prime density decreases very slowly, so **the solution must be far larger than \(10^{14}\)**
+- A naive linear scan would require cosmological computing power ( > \(10^{30}\) years)
 
 ---
 
-##  **数学转向**
-- 放弃穷举，转而搜索：
-  - **大质数间隙中心**（来自 [Prime Gap List](https://primegap-list-project.github.io/)）
-  - **Primorial 附近**（\(p\#\)，被小质数整除）
-  - **阶乘附近**（\(n!\)，含长合数链）
+## **Engineering Optimizations**
+- Developed a **multi-threaded segmented sieve program** (C++)
+- Introduced **fast pre‑screening**: using the first 100 small primes to estimate the number of "survivors"
+- **Result**: Within \(10^{14}\), **zero intervals entered the full sieve** → confirms no solution
 
 ---
 
-##  **构造法突破：CRT + 允许元组**
-- 选择 **admissible 12-tuple**：  
+## **Shift in Mathematical Approach**
+- Abandoned exhaustive search and instead looked for:
+  - **Centers of large prime gaps** (from the [Prime Gap List](https://primegap-list-project.github.io/))
+  - **Near primorials** (\(p\#\), divisible by many small primes)
+  - **Near factorials** (\(n!\), which contain long chains of composite numbers)
+
+---
+
+## **Breakthrough Using CRT + Admissible Tuples**
+- Chose an **admissible 12‑tuple**:  
   \(H = [166, 278, 604, 724, 1096, 1256, 1306, 1492, 1514, 1564, 1574, 1712]\)
-- 对其余 1992 个位置 \(j \in S\)，分配唯一小质数 \(q_j\)
-- 解同余方程组：  
+- For the remaining 1992 positions \(j \in S\), assign a unique small prime \(q_j\)
+- Solve the system of congruences:  
   \[
   N \equiv -j \pmod{q_j} \quad \forall j \in S
   \]
-- 得基础解 \(N_0\) 和模 \(M\)，搜索 \(k\) 使 \(N = N_0 + kM + h\) 全为质数（\(h \in H\)）
+- Obtain a base solution \(N_0\) and modulus \(M\); then search for \(k\) such that all \(N = N_0 + kM + h\) are prime (for \(h \in H\))
 
 ---
 
-##  **奇迹命中：10 次随机尝试即成功**
-- 在 \(N \sim 10^{72}\) 附近随机采样
-- **第 10 次尝试命中目标**
-- 获得候选解: N = 283,652,129,125,808,400,513,278,476,301,455,085,008,845,288,816,557,395,539,337,194,639,631,785 (72 digits)
+## **A Striking Success: Hit on the 10th Random Attempt**
+- Sampled randomly near \(N \sim 10^{72}\)
+- **The 10th attempt hit the target**
+- Obtained a candidate solution:  
+  \(N = 283\,652\,129\,125\,808\,400\,513\,278\,476\,301\,455\,085\,008\,845\,288\,816\,557\,395\,539\,337\,194\,639\,631\,785\) (72 digits)
 - Our research story: [research story](https://www.bilibili.com/video/BV1hhZWBaEeX)
 
-## **继续前进**
-1. 验证候选解，在候选解附近继续搜索
-2. 分析数据：
-  - 解的数量、密度、间隔分布, 与理论预期对比
-  - 详见 ![pic](solutions_analysis.png) ![pic](solutions_cumulative.png) ![pic](solutions_density.png)
-    
-## **Smallest Solution**
-Still searching for the smallest \(N\) with exactly 12 primes in \([N, N+2003]\)
-- Now solution: N = 5106261637831089750446717241
+---
 
+## **Moving Forward**
+1. Verify the candidate solution and continue searching near it  
+2. Analyze the data:  
+   - Number of solutions, their density, distribution of gaps, comparison with theoretical expectations  
+   - See details in  
+     ![pic](solutions_analysis.png)  
+     ![pic](solutions_cumulative.png)  
+     ![pic](solutions_density.png)
+
+---
+
+## **Smallest Solution**
+Still searching for the smallest \(N\) with exactly 12 primes in \([N, N+2003]\)  
+- Current solution: \(N = 5\,106\,261\,637\,831\,089\,750\,446\,717\,241\)
