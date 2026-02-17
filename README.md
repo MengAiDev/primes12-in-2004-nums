@@ -63,4 +63,5 @@ Find the smallest positive integer \(N\) such that the interval of 2004 consecut
 
 ## **Smallest Solution**
 Still searching for the smallest \(N\) with exactly 12 primes in \([N, N+2003]\)
-- Current solution: 10925450000 < N <= 413523644431096819312710
+- Current solution: N = 413523644431096819312710
+- OR 11068170000 < N < 413523644431096640670000 (to be continued)
