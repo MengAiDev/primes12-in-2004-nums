@@ -1,11 +1,13 @@
 #include <primesieve.hpp>
 #include <iostream>
 #include <fstream>
+#include <vector>
 #include <deque>
 #include <cstdint>
 #include <chrono>
 #include <csignal>
 #include <atomic>
+#include <cstring>
 
 // 全局原子标志，用于响应 Ctrl+C
 std::atomic<bool> keep_running(true);
@@ -13,9 +15,6 @@ void signal_handler(int) { keep_running = false; }
 
 // 进度输出间隔（每处理这么多素数输出一次当前素数）
 const uint64_t PROGRESS_STEP = 10'000'000;
-
-// 时间检查间隔（每处理这么多素数检查一次是否需要保存检查点）
-const uint64_t TIME_CHECK_INTERVAL = 10'000'000;
 
 // 窗口大小（连续素数个数）
 const size_t WINDOW_SIZE = 12;
@@ -73,8 +72,7 @@ int main(int argc, char* argv[]) {
               << "Checkpoint: " << (checkpoint_file.empty() ? "disabled" : checkpoint_file) << "\n"
               << "Save interval: " << save_interval << " seconds\n"
               << "Press Ctrl+C to interrupt gracefully.\n"
-              << "Progress output every " << PROGRESS_STEP << " primes.\n"
-              << "Running in single-threaded mode (primesieve::iterator is sequential).\n";
+              << "Progress output every " << PROGRESS_STEP << " primes.\n";
 
     primesieve::iterator it;
     std::deque<uint64_t> window;
@@ -97,12 +95,15 @@ int main(int argc, char* argv[]) {
     if (!checkpoint_loaded) {
         it.skipto(start);
         uint64_t p = it.next_prime();
-        while (p < start) {   // 确保 p >= start
+        while (p < start) {   // 确保 p >= start（理论不会发生，但以防万一）
             p = it.next_prime();
         }
+        last_prime = p - 1;   // 使循环中第一个 p 成为新素数（稍后会在循环中处理）
+        // 但更好的做法是：将 last_prime 设为 start-1，这样循环中会正确处理第一个素数
+        // 这里我们直接让 last_prime 记录最新处理的素数，窗口初始为空
         last_prime = 0;        // 标记尚未处理任何素数，窗口为空
         window.clear();
-        std::cout << "Starting fresh. First prime will be read.\n";
+        std::cout << "Starting fresh. First prime will be read." << std::endl;
     }
 
     uint64_t prime_count = 0;           // 用于进度计数
@@ -112,7 +113,7 @@ int main(int argc, char* argv[]) {
         // 获取下一个素数
         uint64_t p = it.next_prime();
         if (p > end) {
-            std::cout << "Reached end of range.\n";
+            std::cout << "Reached end of range." << std::endl;
             break;
         }
 
@@ -142,29 +143,27 @@ int main(int argc, char* argv[]) {
 
         // 定期输出进度（每 PROGRESS_STEP 个素数）
         if (prime_count % PROGRESS_STEP == 0) {
-            std::cout << "PROGRESS:" << p << '\n';   // 使用 '\n' 避免频繁刷新
-            std::cout.flush();                        // 但进度信息仍需立即显示
+            std::cout << "PROGRESS:" << p << std::endl;
+            std::cout.flush();
         }
 
-        // 定期保存检查点（每 TIME_CHECK_INTERVAL 个素数检查一次时间）
-        if (prime_count % TIME_CHECK_INTERVAL == 0) {
-            auto now = std::chrono::steady_clock::now();
-            if (!checkpoint_file.empty() &&
-                std::chrono::duration_cast<std::chrono::seconds>(now - last_save).count() >= save_interval) {
-                if (save_checkpoint(window, last_prime, checkpoint_file)) {
-                    std::cout << "Checkpoint saved at prime " << last_prime << '\n';
-                } else {
-                    std::cerr << "Failed to save checkpoint!\n";
-                }
-                last_save = now;
+        // 定期保存检查点
+        auto now = std::chrono::steady_clock::now();
+        if (!checkpoint_file.empty() &&
+            std::chrono::duration_cast<std::chrono::seconds>(now - last_save).count() >= save_interval) {
+            if (save_checkpoint(window, last_prime, checkpoint_file)) {
+                std::cout << "Checkpoint saved at prime " << last_prime << std::endl;
+            } else {
+                std::cerr << "Failed to save checkpoint!" << std::endl;
             }
+            last_save = now;
         }
     }
 
     // 正常结束或中断，保存最终检查点
     if (!checkpoint_file.empty()) {
         save_checkpoint(window, last_prime, checkpoint_file);
-        std::cout << "Final checkpoint saved.\n";
+        std::cout << "Final checkpoint saved." << std::endl;
     }
     return 0;
 }
