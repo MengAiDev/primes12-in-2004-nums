@@ -7,8 +7,8 @@ import signal
 from threading import Thread, Event
 
 # -------------------- 配置参数 --------------------
-TOTAL_START = 1000003745670997
-TOTAL_END   = 1000201510016365   
+TOTAL_START = 10**15 + 1
+TOTAL_END   = 2 * (10**15)   
 NUM_SEGMENTS = 4
 OVERLAP = 2004
 CHECKPOINT_INTERVAL = 600      
