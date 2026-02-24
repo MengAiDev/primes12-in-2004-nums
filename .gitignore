@@ -1,3 +1,4 @@
 media/
 batch_calculate/prime_search
 *.bin
+gap_search

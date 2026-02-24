@@ -11,12 +11,12 @@ import queue
 import shutil
 
 # -------------------- 配置参数 --------------------
-TOTAL_START = 2000042926217597
+TOTAL_START = 2005497495852029
 TOTAL_END   = 3*10**15
 NUM_SEGMENTS = 4
 OVERLAP = 2004
 CHECKPOINT_INTERVAL = 3600      # 检查点保存间隔（秒），增大以减少磁盘 I/O
-PROGRESS_THROTTLE = 10           # 每收到 PROGRESS_THROTTLE 条才打印一次
+PROGRESS_THROTTLE = 100
 TERMINATE_TIMEOUT = 5            # 终止子进程后等待的秒数，然后强制杀死
 # -------------------------------------------------
 
